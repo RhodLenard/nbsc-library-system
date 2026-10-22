@@ -1,0 +1,18 @@
+{
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.vite": true,
+    "**/*.log": true,
+    "**/data/legacy-copy": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.vite": true,
+    "**/*.log": true,
+    "**/data/legacy-copy": true
+  }
+}

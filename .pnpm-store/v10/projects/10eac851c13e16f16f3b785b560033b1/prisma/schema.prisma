@@ -1,0 +1,379 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum MemberStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+enum StaffStatus {
+  ACTIVE
+  INACTIVE
+}
+enum CopyStatus {
+  AVAILABLE
+  ON_LOAN
+  RESERVED
+  LOST
+  DAMAGED
+  REPLACED
+  REPAIR
+}
+enum LoanStatus {
+  ACTIVE
+  RETURNED
+  LOST
+}
+enum ReservationStatus {
+  PENDING
+  READY
+  RECEIVED
+  CANCELLED
+  EXPIRED
+}
+enum FineStatus {
+  UNPAID
+  PAID
+  WAIVED
+}
+
+model Member {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  legacyStatus String? @map("legacy_status") @db.VarChar(100)
+  schoolId String? @unique @map("school_id") @db.VarChar(64)
+  name String @db.VarChar(300)
+  email String? @unique @db.VarChar(190)
+  passwordHash String? @map("password_hash") @db.VarChar(255)
+  program String? @db.VarChar(225)
+  memberType String? @map("member_type") @db.VarChar(100)
+  phone String? @db.VarChar(100)
+  status MemberStatus @default(ACTIVE)
+  importedAt DateTime? @map("imported_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  loans Loan[]
+  reservations Reservation[]
+  @@map("members")
+}
+
+model Staff {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  legacyStatus String? @map("legacy_status") @db.VarChar(100)
+  employeeId String? @unique @map("employee_id") @db.VarChar(64)
+  name String @db.VarChar(300)
+  email String? @unique @db.VarChar(190)
+  passwordHash String? @map("password_hash") @db.VarChar(255)
+  role String @db.VarChar(100)
+  status StaffStatus @default(ACTIVE)
+  importedAt DateTime? @map("imported_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("staff")
+}
+
+model RolePermission {
+  id        String   @id @default(cuid())
+  role      String   @db.VarChar(64)
+  permission String  @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([role, permission])
+  @@index([role])
+  @@map("role_permissions")
+}
+
+model AuditEvent {
+  id            String   @id @default(cuid())
+  actorId       String?  @map("actor_id") @db.VarChar(64)
+  actorRole     String?  @map("actor_role") @db.VarChar(64)
+  action        String   @db.VarChar(120)
+  targetType    String?  @map("target_type") @db.VarChar(80)
+  targetId      String?  @map("target_id") @db.VarChar(255)
+  occurredAt    DateTime @default(now()) @map("occurred_at")
+  requestId     String?  @map("request_id") @db.VarChar(128)
+  beforeData    Json?    @map("before_data")
+  afterData     Json?    @map("after_data")
+  ipAddress     String?  @map("ip_address") @db.VarChar(64)
+  @@index([occurredAt])
+  @@index([actorId, occurredAt])
+  @@index([targetType, targetId, occurredAt])
+  @@map("audit_events")
+}
+
+model BackupRun {
+  id         String   @id @default(cuid())
+  status     String   @db.VarChar(32)
+  startedAt  DateTime @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  verifiedAt DateTime? @map("verified_at")
+  checksum   String?  @db.Char(64)
+  sizeBytes  BigInt?  @map("size_bytes") @db.UnsignedBigInt
+  filePath   String?  @map("file_path") @db.VarChar(1000)
+  error      String?  @db.Text
+  kind       String   @default("AUTOMATIC") @db.VarChar(20)
+  @@index([status, startedAt])
+  @@map("backup_runs")
+}
+
+model BookTitle {
+  id String @id @default(cuid())
+  legacyKey String? @unique @map("legacy_key") @db.VarChar(255)
+  title String @db.VarChar(500)
+  preferredTitle String? @map("preferred_title") @db.VarChar(500)
+  isbn String? @db.VarChar(100)
+  subjectCategory String? @map("subject_category") @db.VarChar(100)
+  program String? @db.VarChar(100)
+  summary String? @db.Text
+  contents String? @db.Text
+  coverImage String? @map("cover_image") @db.VarChar(255)
+  publisherId String? @map("publisher_id")
+  publisher Publisher? @relation(fields: [publisherId], references: [id])
+  publicationYear Int? @map("publication_year")
+  createdAt DateTime @default(now()) @map("created_at")
+  copies Copy[]
+  reservations Reservation[]
+  contributors TitleContributor[]
+  @@index([title])
+  @@index([isbn])
+  @@map("book_titles")
+}
+
+model Author {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  firstName String @map("first_name") @db.VarChar(100)
+  middleInitial String? @map("middle_initial") @db.VarChar(100)
+  lastName String @map("last_name") @db.VarChar(100)
+  displayName String @map("display_name") @db.VarChar(300)
+  contributors TitleContributor[]
+  @@map("authors")
+}
+
+model Publisher {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  name String @db.VarChar(255)
+  place String? @db.VarChar(255)
+  titles BookTitle[]
+  @@map("publishers")
+}
+
+model CorporateContributor {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  name String @db.VarChar(255)
+  type String? @db.VarChar(100)
+  location String? @db.VarChar(255)
+  description String? @db.Text
+  contributors TitleContributor[]
+  @@map("corporate_contributors")
+}
+
+model TitleContributor {
+  id String @id @default(cuid())
+  legacyId Int? @map("legacy_id")
+  legacySourceTable String @map("legacy_source_table") @db.VarChar(100)
+  titleId String @map("title_id")
+  authorId String? @map("author_id")
+  corporateId String? @map("corporate_id")
+  role String @db.VarChar(100)
+  title BookTitle @relation(fields: [titleId], references: [id])
+  author Author? @relation(fields: [authorId], references: [id])
+  corporate CorporateContributor? @relation(fields: [corporateId], references: [id])
+  @@unique([legacySourceTable, legacyId])
+  @@index([titleId])
+  @@index([authorId])
+  @@index([corporateId])
+  @@map("title_contributors")
+}
+
+model Copy {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  legacyStatus String? @map("legacy_status") @db.VarChar(100)
+  legacyAccession String? @map("legacy_accession") @db.VarChar(25)
+  accession String @unique @db.VarChar(64)
+  titleId String @map("title_id")
+  title BookTitle @relation(fields: [titleId], references: [id])
+  copyNumber Int? @map("copy_number")
+  callNumber String? @map("call_number") @db.VarChar(255)
+  shelfLocation String? @map("shelf_location") @db.VarChar(100)
+  status CopyStatus @default(AVAILABLE)
+  importedAt DateTime? @map("imported_at")
+  loans Loan[]
+  reservations Reservation[]
+  incidents CopyIncident[]
+  @@index([status, shelfLocation])
+  @@map("copies")
+}
+
+model CopyIncident {
+  id String @id @default(cuid())
+  copyId String @map("copy_id")
+  memberId String? @map("member_id")
+  type String @db.VarChar(20)
+  status String @default("UNREPLACED") @db.VarChar(20)
+  reportedAt DateTime @default(now()) @map("reported_at")
+  resolvedAt DateTime? @map("resolved_at")
+  copy Copy @relation(fields: [copyId], references: [id])
+  @@index([status, reportedAt])
+  @@index([copyId])
+  @@map("copy_incidents")
+}
+
+model Loan {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  legacyStatus String? @map("legacy_status") @db.VarChar(100)
+  memberId String @map("member_id")
+  copyId String @map("copy_id")
+  member Member @relation(fields: [memberId], references: [id])
+  copy Copy @relation(fields: [copyId], references: [id])
+  status LoanStatus @default(ACTIVE)
+  issuedAt DateTime @map("issued_at")
+  dueAt DateTime @map("due_at")
+  returnedAt DateTime? @map("returned_at")
+  fines Fine[]
+  @@index([memberId, status])
+  @@index([copyId, status])
+  @@map("loans")
+}
+
+model Reservation {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  legacyStatus String? @map("legacy_status") @db.VarChar(100)
+  memberId String @map("member_id")
+  titleId String @map("title_id")
+  copyId String? @map("copy_id")
+  member Member @relation(fields: [memberId], references: [id])
+  title BookTitle @relation(fields: [titleId], references: [id])
+  copy Copy? @relation(fields: [copyId], references: [id])
+  status ReservationStatus @default(PENDING)
+  reservedAt DateTime @map("reserved_at")
+  readyAt DateTime? @map("ready_at")
+  receivedAt DateTime? @map("received_at")
+  cancelledAt DateTime? @map("cancelled_at")
+  @@index([memberId, status])
+  @@index([copyId, status])
+  @@index([titleId, status])
+  @@map("reservations")
+}
+
+model Fine {
+  id String @id @default(cuid())
+  legacyId Int? @unique @map("legacy_id")
+  legacyStatus String? @map("legacy_status") @db.VarChar(100)
+  loanId String @map("loan_id")
+  loan Loan @relation(fields: [loanId], references: [id])
+  amount Decimal @db.Decimal(12, 2)
+  status FineStatus @default(UNPAID)
+  reason String? @db.VarChar(100)
+  assessedAt DateTime @map("assessed_at")
+  paidAt DateTime? @map("paid_at")
+  paymentMethod String? @map("payment_method") @db.VarChar(50)
+  @@index([status])
+  @@map("fines")
+}
+
+model LegacyStatusMapping {
+  id String @id @default(cuid())
+  entityType String @map("entity_type") @db.VarChar(64)
+  legacyValue String @map("legacy_value") @db.VarChar(100)
+  targetValue String @map("target_value") @db.VarChar(100)
+  mappingVersion String @map("mapping_version") @db.VarChar(32)
+  reason String @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([entityType, legacyValue, mappingVersion])
+  @@map("legacy_status_mappings")
+}
+
+model LegacyImportRun {
+  id String @id @default(cuid())
+  sourcePath String @map("source_path") @db.VarChar(1000)
+  sourceSha256 String @map("source_sha256") @db.Char(64)
+  startedAt DateTime @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  status String @db.VarChar(32)
+  @@map("legacy_import_runs")
+}
+
+model LegacyImportReject {
+  id String @id @default(cuid())
+  runId String @map("run_id")
+  sourceTable String @map("source_table") @db.VarChar(100)
+  legacyId String? @map("legacy_id") @db.VarChar(100)
+  reason String @db.Text
+  payload Json
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([runId, sourceTable])
+  @@map("legacy_import_rejects")
+}
+
+model LegacyStageRow {
+  id BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  runId String @map("run_id")
+  sourceTable String @map("source_table") @db.VarChar(100)
+  legacyId String? @map("legacy_id") @db.VarChar(100)
+  payload Json
+  sourceCollation String @default("utf8mb4_general_ci") @map("source_collation") @db.VarChar(64)
+  stagedAt DateTime @default(now()) @map("staged_at")
+  @@index([runId, sourceTable])
+  @@map("legacy_stage_rows")
+}
+
+model IdempotencyKey {
+  id String @id @default(cuid())
+  principalId String @map("principal_id")
+  method String @db.VarChar(16)
+  path String @db.VarChar(255)
+  key String @db.VarChar(255)
+  requestHash String @map("request_hash") @db.Char(64)
+  response Json
+  statusCode Int @map("status_code")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([principalId, method, path, key])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
+model Message {
+  id String @id @default(cuid())
+  senderId String @map("sender_id") @db.VarChar(30)
+  recipientId String @map("recipient_id") @db.VarChar(30)
+  subject String @db.VarChar(300)
+  body String @db.Text
+  readAt DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([recipientId, createdAt])
+  @@map("messages")
+}
+
+model LibraryVisit {
+  id String @id @default(cuid())
+  memberId String @map("member_id")
+  enteredAt DateTime @default(now()) @map("entered_at")
+  exitedAt DateTime? @map("exited_at")
+  @@index([memberId, exitedAt])
+  @@index([enteredAt])
+  @@map("library_visits")
+}
+
+model Notification {
+  id String @id @default(cuid())
+  recipientId String @map("recipient_id") @db.VarChar(30)
+  kind String @db.VarChar(30)
+  text String @db.VarChar(1000)
+  readAt DateTime? @map("read_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([recipientId, createdAt])
+  @@map("notifications")
+}

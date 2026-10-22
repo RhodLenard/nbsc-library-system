@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Nunito', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --color-brand: #c62828;
+  --color-brand-dark: #9f1d1d;
+  --color-brand-soft: #fdecec;
+  --color-side: #1c1f26;
+  --color-side-2: #262a33;
+  --color-page: #f3f4f8;
+  --color-ink: #2b2f3a;
+  --color-mute: #6b7280;
+  --color-line: #e3e6ee;
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body { background: var(--color-page); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  ::selection { background: #f6c4c4; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+}
+
+.scroll-quiet { scrollbar-width: none; }
+.scroll-quiet::-webkit-scrollbar { display: none; }
+.scroll-thin { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.scroll-thin:hover { scrollbar-color: #c9ccd6 transparent; }
+
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; inset: 0; background: white; }
+}

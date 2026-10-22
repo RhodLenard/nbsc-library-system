@@ -1,0 +1,2 @@
+# Binary assets are stored in this repository as ordinary Git blobs.
+# Keep individual files below GitHub's 100 MiB per-file limit.

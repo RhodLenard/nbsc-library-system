@@ -1,0 +1,58 @@
+name: Quality checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_DATABASE: library_v2
+          MARIADB_USER: library_app
+          MARIADB_PASSWORD: ci-password
+          MARIADB_ROOT_PASSWORD: ci-root-password
+        ports:
+          - 3308:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      DATABASE_URL: mysql://library_app:ci-password@127.0.0.1:3308/library_v2
+      JWT_SECRET: ci-test-secret-that-is-at-least-32-characters
+      CORS_ORIGIN: http://127.0.0.1:4173
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir server install --frozen-lockfile
+      - run: pnpm --dir server prisma:generate
+      - run: pnpm --dir server prisma:migrate
+      - run: pnpm --dir server exec tsx src/integration-smoke.ts
+      - run: pnpm --dir server test
+      - run: pnpm build
+      - run: pnpm --dir server build
+      - name: Start API and run database integration smoke test
+        run: |
+          pnpm --dir server start > /tmp/library-api.log 2>&1 &
+          echo $! > /tmp/library-api.pid
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3001/v1/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/library-api.log
+          exit 1
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test

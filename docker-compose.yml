@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: library_v2
+      MARIADB_USER: library_app
+      MARIADB_PASSWORD: change-this-in-production
+      MARIADB_ROOT_PASSWORD: change-the-root-password
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --transaction-isolation=READ-COMMITTED
+    ports:
+      - "3308:3306"
+    volumes:
+      - mariadb_v2:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build: ./server
+    environment:
+      DATABASE_URL: mysql://library_app:change-this-in-production@db:3306/library_v2
+      JWT_SECRET: replace-with-a-long-random-secret
+      CORS_ORIGIN: http://localhost:5173
+      PORT: 3001
+      BACKUP_DIR: /backups
+      # Set this to a separate, access-controlled host or mounted storage path.
+      # The API container never stores backup files in its application filesystem.
+      BACKUP_RESTORE_TEST_DATABASE_URL: ${BACKUP_RESTORE_TEST_DATABASE_URL:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    volumes:
+      - ${BACKUP_HOST_DIR:?Set BACKUP_HOST_DIR to an external backup storage path}:/backups
+
+volumes:
+  mariadb_v2:
