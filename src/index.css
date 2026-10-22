@@ -16,8 +16,8 @@
 }
 
 @layer base {
-  html, body, #root { height: 100%; }
-  body { background: var(--color-page); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  html, body, #root { height: 100%; width: 100%; max-width: 100%; overflow: hidden; }
+  body { position: fixed; inset: 0; background: var(--color-page); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   ::selection { background: #f6c4c4; }
   button { cursor: pointer; }
   :focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }

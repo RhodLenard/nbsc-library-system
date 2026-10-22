@@ -355,9 +355,9 @@ function Editor({
           </div>
         </Alert>
       )}
-      <div className="grid items-start gap-5 xl:grid-cols-[15.5rem_minmax(0,1fr)]">
-        <aside className="space-y-3">
-          <Card className="p-3.5">
+      <div className="grid min-w-0 items-start gap-4 sm:gap-5 xl:grid-cols-[15.5rem_minmax(0,1fr)]">
+        <aside className="min-w-0 space-y-3">
+          <Card className="hidden p-3.5 sm:block">
             <div className="mt-3 flex items-center gap-3">
               {existingBook?.coverImage ? (
                 <img
@@ -388,7 +388,7 @@ function Editor({
             ref={scroller}
             role="tablist"
             aria-label="Catalog record tabs"
-            className="scroll-quiet flex gap-1 overflow-x-auto xl:flex-col xl:overflow-visible"
+            className="scroll-quiet -mx-1 flex gap-1 overflow-x-auto px-1 pb-1 xl:mx-0 xl:flex-col xl:overflow-visible xl:px-0 xl:pb-0"
           >
             {tabs.map((t, i) => {
               const Icon = ICONS[t];
@@ -402,13 +402,13 @@ function Editor({
                   onClick={() => go(t)}
                   title={DOT_LABEL[st]}
                   className={cx(
-                    "flex shrink-0 items-center gap-2 rounded-md border px-3 py-2.5 text-left text-sm font-bold transition xl:w-full",
+                    "flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-2 text-left text-xs font-bold transition sm:px-3 sm:text-sm xl:w-full xl:gap-2 xl:py-2.5",
                     active
                       ? "border-line bg-white text-ink shadow-sm"
                       : "border-transparent text-slate-600 hover:bg-slate-50",
                   )}
                 >
-                  <span className="w-4 text-right text-xs font-semibold text-mute">
+                  <span className="w-3 text-right text-[11px] font-semibold text-mute xl:w-4 xl:text-xs">
                     {i + 1}.
                   </span>
                   <Icon size={15} className="hidden xl:block" />
@@ -441,9 +441,9 @@ function Editor({
               </span>
             ))}
           </div>
-          <div className="p-4 sm:p-6">{body}</div>
-          <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-line bg-slate-50 px-4 py-3 sm:px-6">
-            <div className="flex items-center gap-2">
+          <div className="p-3 sm:p-6">{body}</div>
+          <footer className="flex flex-col gap-3 border-t border-line bg-slate-50 px-3 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-2 sm:px-6">
+            <div className="flex w-full items-center gap-2 sm:w-auto">
               <Link
                 to={
                   mode === "edit"
@@ -451,9 +451,10 @@ function Editor({
                     : "/staff/catalog"
                 }
               >
-                <Btn variant="light">Cancel</Btn>
+                <Btn className="flex-1 sm:flex-none" variant="light">Cancel</Btn>
               </Link>
               <Btn
+                className="flex-1 sm:flex-none"
                 variant="light"
                 icon={<ChevronLeft size={15} />}
                 disabled={idx === 0}
@@ -462,19 +463,19 @@ function Editor({
                 Previous
               </Btn>
             </div>
-            <span className="text-xs font-semibold text-mute">
+            <span className="order-first text-xs font-semibold text-mute sm:order-none">
               Tab {idx + 1} of {tabs.length}
               {mode === "add" && " · draft saved in this browser"}
             </span>
-            <div className="flex gap-2">
+            <div className="flex w-full gap-2 sm:w-auto">
               {!last && (
-                <Btn variant="light" onClick={() => go(tabs[idx + 1])}>
+                <Btn className="flex-1 sm:flex-none" variant="light" onClick={() => go(tabs[idx + 1])}>
                   Next
                   <ChevronRight size={15} />
                 </Btn>
               )}
               {(last || mode === "edit") && (
-                <Btn icon={<Save size={15} />} onClick={submit}>
+                <Btn className="flex-1 sm:flex-none" icon={<Save size={15} />} onClick={submit}>
                   {mode === "add" ? "Save Book" : "Save Changes"}
                 </Btn>
               )}

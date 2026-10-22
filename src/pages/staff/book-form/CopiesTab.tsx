@@ -16,7 +16,9 @@ export default function CopiesTab({ form: f, patch, errors, show, onSaveStatuses
       </div>
       {onSaveStatuses && <p className="mb-3 text-xs text-mute">Saves only each copy’s availability status. Missing details or accession warnings in other tabs will not block this action.</p>}
       {f.copies.length === 0 ? <EmptyState title="No copies" hint="Add an accession group in Local Information." /> : (
-        <div className="scroll-thin overflow-x-auto rounded-md border border-line">
+        <>
+          <p className="mb-2 text-xs text-mute md:hidden">Swipe the table left or right to edit all copy fields.</p>
+          <div className="scroll-thin overflow-x-auto rounded-md border border-line">
           <table className="w-full min-w-[56rem] text-sm">
             <thead className="bg-slate-50 text-[11px] font-extrabold uppercase tracking-wider text-slate-500"><tr>{['Accession', 'Copy no.', 'Edition', 'Location', 'Status', 'Call number', ''].map(h => <th key={h} className="px-3 py-2 text-left">{h}</th>)}</tr></thead>
             <tbody className="divide-y divide-line">
@@ -36,7 +38,8 @@ export default function CopiesTab({ form: f, patch, errors, show, onSaveStatuses
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </TabFrame>
   )

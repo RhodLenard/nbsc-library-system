@@ -42,8 +42,16 @@ export default function Shell({ kind }: { kind: "staff" | "member" }) {
   const loc = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
+  const [touchLayout, setTouchLayout] = useState(false);
   const [menu, setMenu] = useState<"bell" | "mail" | "user" | null>(null);
   const ref = useOutside(() => setMenu(null));
+  useEffect(() => {
+    const query = window.matchMedia("(pointer: coarse), (any-pointer: coarse)");
+    const update = () => setTouchLayout(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
   useEffect(() => {
     setMobile(false);
     setMenu(null);
@@ -168,10 +176,11 @@ export default function Shell({ kind }: { kind: "staff" | "member" }) {
       </span>
     );
   return (
-    <div className="flex h-full">
+    <div className="flex h-full min-w-0 overflow-x-hidden">
       <aside
         className={cx(
-          "hidden shrink-0 flex-col bg-side transition-[width] duration-200 lg:flex",
+          "hidden shrink-0 flex-col bg-side transition-[width] duration-200",
+          !touchLayout && "lg:flex",
           w,
         )}
       >
@@ -179,7 +188,7 @@ export default function Shell({ kind }: { kind: "staff" | "member" }) {
         {sidebar}
       </aside>
       {mobile && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className={cx("fixed inset-0 z-50", !touchLayout && "lg:hidden")}>
           <div
             className="absolute inset-0 bg-slate-900/60"
             onClick={() => setMobile(false)}
@@ -202,14 +211,14 @@ export default function Shell({ kind }: { kind: "staff" | "member" }) {
           <button
             onClick={() => setMobile(true)}
             aria-label="Open menu"
-            className="rounded p-2 text-mute hover:bg-slate-100 lg:hidden"
+            className={cx("rounded p-2 text-mute hover:bg-slate-100", !touchLayout && "lg:hidden")}
           >
             <Menu size={20} />
           </button>
           <button
             onClick={() => setCollapsed((c) => !c)}
             aria-label="Toggle sidebar"
-            className="hidden rounded p-2 text-mute hover:bg-slate-100 lg:block"
+            className={cx("hidden rounded p-2 text-mute hover:bg-slate-100", !touchLayout && "lg:block")}
           >
             {collapsed ? (
               <PanelLeftOpen size={20} />
@@ -381,7 +390,7 @@ export default function Shell({ kind }: { kind: "staff" | "member" }) {
             </div>
           </div>
         </header>
-        <main className="scroll-thin min-w-0 flex-1 overflow-y-auto p-3 sm:p-6">
+        <main className="scroll-thin min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-6">
           {denied ? (
             <div className="mx-auto mt-16 max-w-md rounded-lg border border-line bg-white p-8 text-center">
               <ShieldAlert size={40} className="mx-auto text-brand" />
