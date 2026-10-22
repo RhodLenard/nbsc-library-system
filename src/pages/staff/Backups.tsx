@@ -1,5 +1,6 @@
-import { CalendarClock, CheckCircle2, DatabaseBackup, HardDrive, Undo2 } from 'lucide-react'
-import { Alert, Btn, Card, DataTable, PageHeader, Status, StatCard, useConfirm, type Col } from '../../components/ui'
+import { useEffect } from 'react'
+import { CalendarClock, CheckCircle2, DatabaseBackup, HardDrive } from 'lucide-react'
+import { Alert, Btn, Card, DataTable, PageHeader, Status, StatCard, type Col } from '../../components/ui'
 import { useActions } from '../../lib/actions'
 import { mutation } from '../../lib/api'
 import { fmtDateTime, type Backup } from '../../lib/types'
@@ -8,19 +9,17 @@ const mb = (size: string) => { const n = parseFloat(size); return /gb/i.test(siz
 
 export default function Backups() {
   const { s, refresh, toast } = useActions()
-  const confirm = useConfirm()
+
+  useEffect(() => {
+    const timer = window.setInterval(() => { void refresh() }, 30_000)
+    return () => window.clearInterval(timer)
+  }, [refresh])
 
   const running = s.backups.some(b => b.status === 'Running')
   const last = s.backups.filter(b => b.status === 'Completed').sort((a, b) => b.date.localeCompare(a.date))[0]
   const used = s.backups.filter(b => b.status === 'Completed').reduce((a, b) => a + mb(b.size), 0)
 
   const create = async () => { try { await mutation('/staff/backups', {}); await refresh(); toast('Backup job completed; status reflects checksum verification.', 'success') } catch (cause) { toast(cause instanceof Error ? cause.message : 'Backup failed.', 'error') } }
-  const restore = async (b: Backup) => {
-    if (await confirm({ title: 'Run clean-database restore test?', danger: true, confirmLabel: 'Run restore test', message: <div><p className="font-bold text-red-700">This imports {b.name} into the separately configured clean test database.</p><p className="mt-2">The live library database is explicitly blocked as a restore target.</p></div> })) {
-      try { await mutation(`/staff/backups/${b.id}/restore-test`, {}); await refresh(); toast('Clean-database restore test completed and was audit logged.', 'success') } catch (cause) { toast(cause instanceof Error ? cause.message : 'Restore test failed.', 'error') }
-    }
-  }
-
   const cols: Col<Backup>[] = [
     { key: 'name', header: 'File name', sort: b => b.name, render: b => <span className="font-mono text-xs font-semibold">{b.name}</span> },
     { key: 'date', header: 'Created', sort: b => b.date, render: b => fmtDateTime(b.date) },
@@ -44,10 +43,7 @@ export default function Backups() {
 
       <Card title="Backups" className="mb-4" flush
         actions={<Btn icon={<DatabaseBackup size={15} />} onClick={create} disabled={running}>{running ? 'Backing up…' : 'Create backup now'}</Btn>}>
-        <DataTable rows={s.backups} columns={cols} pageSize={8}
-          actions={b => <>
-            <Btn size="sm" variant="outline" icon={<Undo2 size={13} />} disabled={b.status !== 'Completed'} onClick={() => void restore(b)}>Test restore</Btn>
-          </>} />
+        <DataTable rows={s.backups} columns={cols} pageSize={8} />
       </Card>
     </div>
   )

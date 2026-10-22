@@ -2,6 +2,8 @@
 
 This guide deploys Library System v2 on a dedicated Windows computer in the library. Staff, members, and mobile devices connect through the library network using one HTTPS address.
 
+For a beginner-friendly first deployment, use [SIMPLE_LIBRARY_SERVER_SETUP.md](SIMPLE_LIBRARY_SERVER_SETUP.md) before this detailed runbook.
+
 ## What this deployment provides
 
 ```text
@@ -212,7 +214,7 @@ Then test from a staff laptop, a different desktop, and a mobile device on the l
 5. Verify catalog, copies, members, staff accounts, active loans, reservations, fines, and rejected import rows.
 6. Start API and Caddy services.
 7. Test HTTPS, staff login, member login, catalog search, borrow, return, reservation, fine payment, and logout from another device.
-8. Run a manual v2 backup and restore it into `library_v2_restore_test`.
+8. Run a manual v2 backup and confirm it is marked `Completed` after checksum verification.
 9. Record the backup checksum, restore result, and the responsible staff member.
 10. Announce the new address only after all checks pass.
 
@@ -243,6 +245,6 @@ Keep a short record containing:
 - import run ID, record counts, and reject count;
 - administrator account creation confirmation;
 - URLs tested from laptop, desktop, and mobile;
-- backup checksum and restore-test result;
+- backup checksum and completed backup result;
 - screenshots or exports of health, audit, and backup records;
 - rollback contact and location of the final legacy backup.
